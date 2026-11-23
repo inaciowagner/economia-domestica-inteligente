@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import formulario_completo %}
+{% block title %}Membros da família · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho"><div><h1 class="pagina-titulo">Configurações</h1>
+    <p class="pagina-subtitulo">Pessoas com acesso aos dados da família</p></div></section>
+{% include "configuracoes/_abas.html" %}
+<div class="grade grade-2">
+    <section class="cartao">
+        <h2 class="cartao-titulo">Membros</h2>
+        <ul class="lista-categorias">
+        {% for m in membros %}
+            <li class="categoria-item {{ 'categoria-inativa' if not m.ativo }}">
+                <span class="categoria-icone avatar">{{ m.nome[:1]|upper }}</span>
+                <span class="categoria-nome">{{ m.nome }} {% if m.id == current_user.id %}<small class="texto-suave">(você)</small>{% endif %}
+                    <small class="texto-suave">{{ m.email }} · {{ 'Administrador' if m.eh_admin else 'Membro' }}{{ ' · inativo' if not m.ativo }}</small></span>
+                {% if current_user.eh_admin and m.id != current_user.id %}
+                <form action="{{ url_for('membro_alternar', id_usuario=m.id) }}" method="POST" class="acao-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button class="botao botao-fantasma botao-pequeno">{{ 'Desativar' if m.ativo else 'Reativar' }}</button>
+                </form>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    </section>
+    {% if current_user.eh_admin %}
+    <form method="POST" class="cartao formulario">
+        <h2 class="cartao-titulo">Adicionar membro</h2>
+        {{ formulario_completo(form) }}
+        <div class="formulario-acoes">{{ form.botao(class="botao botao-primario") }}</div>
+    </form>
+    {% else %}
+    <section class="cartao"><p class="texto-suave">Somente o administrador pode adicionar ou desativar membros.</p></section>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_status, etiqueta_categoria %}
+{% block title %}Dashboard · Economia Doméstica Inteligente{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <h1 class="pagina-titulo">Visão geral</h1>
+        <p class="pagina-subtitulo">{{ inicio|data }} a {{ fim|data }}</p>
+    </div>
+    <form method="GET" class="seletor-periodo" id="form-periodo">
+        <div class="segmentado">
+            {% for valor, rotulo in [('atual','Mês atual'),('anterior','Mês anterior'),('personalizado','Personalizado')] %}
+            <label class="segmentado-item">
+                <input type="radio" name="periodo" value="{{ valor }}" {{ 'checked' if periodo == valor }}
+                       onchange="if(this.value!=='personalizado'){this.form.submit()}else{document.getElementById('datas').hidden=false}"/>
+                <span>{{ rotulo }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div id="datas" class="seletor-periodo-datas" {{ 'hidden' if periodo != 'personalizado' }}>
+            <input type="date" name="inicio" value="{{ inicio.isoformat() }}" class="formulario-entrada" aria-label="Início"/>
+            <input type="date" name="fim" value="{{ fim.isoformat() }}" class="formulario-entrada" aria-label="Fim"/>
+            <button class="botao botao-primario botao-pequeno">Aplicar</button>
+        </div>
+    </form>
+</section>
+
+<section class="indicadores">
+    <article class="indicador indicador-receita">
+        <span class="indicador-rotulo">Receitas realizadas</span>
+        <strong class="indicador-valor">{{ receitas|moeda(moeda) }}</strong>
+        <span class="indicador-nota">no período</span>
+    </article>
+    <article class="indicador indicador-despesa">
+        <span class="indicador-rotulo">Despesas pagas</span>
+        <strong class="indicador-valor">{{ despesas|moeda(moeda) }}</strong>
+        <span class="indicador-nota">resultado do período: <b class="{{ 'positivo' if receitas - despesas >= 0 else 'negativo' }}">{{ (receitas - despesas)|moeda(moeda) }}</b></span>
+    </article>
+    <article class="indicador indicador-saldo">
+        <span class="indicador-rotulo">Saldo atual</span>
+        <strong class="indicador-valor {{ 'negativo' if saldo_atual < 0 }}">{{ saldo_atual|moeda(moeda) }}</strong>
+        <span class="indicador-nota">todas as receitas − despesas até hoje</span>
+    </article>
+    <article class="indicador indicador-previsto">
+        <span class="indicador-rotulo">Saldo previsto</span>
+        <strong class="indicador-valor {{ 'negativo' if saldo_previsto < 0 }}">{{ saldo_previsto|moeda(moeda) }}</strong>
+        <span class="indicador-nota">considerando contas em aberto até {{ ([fim, hoje]|max)|data }}</span>
+    </article>
+</section>
+
+{% if alertas_pagar or alertas_receber %}
+<section class="cartao alertas">
+    <h2 class="cartao-titulo">🔔 Vencimentos próximos e atrasados</h2>
+    <ul class="alertas-lista">
+        {% for c in alertas_pagar %}
+        <li class="alerta-item {{ 'alerta-item-atraso' if c.dias_para_vencer < 0 else 'alerta-item-proximo' }}">
+            <span class="alerta-tipo">A pagar</span>
+            <span class="alerta-descricao">{{ c.descricao }}{% if c.total_parcelas %} ({{ c.parcela_atual }}/{{ c.total_parcelas }}){% endif %}</span>
+            <span class="alerta-prazo">
+                {% if c.dias_para_vencer < 0 %}venceu há {{ -c.dias_para_vencer }} dia(s){% elif c.dias_para_vencer == 0 %}vence hoje{% else %}vence em {{ c.dias_para_vencer }} dia(s){% endif %}
+            </span>
+            <strong class="alerta-valor">{{ c.valor|moeda(moeda) }}</strong>
+            <a href="{{ url_for('conta_pagar_baixa', id_conta=c.id) }}" class="botao botao-sucesso botao-pequeno">Pagar</a>
+        </li>
+        {% endfor %}
+        {% for c in alertas_receber %}
+        <li class="alerta-item {{ 'alerta-item-atraso' if c.dias_para_vencer < 0 else 'alerta-item-receber' }}">
+            <span class="alerta-tipo">A receber</span>
+            <span class="alerta-descricao">{{ c.descricao }}</span>
+            <span class="alerta-prazo">
+                {% if c.dias_para_vencer < 0 %}atrasado há {{ -c.dias_para_vencer }} dia(s){% elif c.dias_para_vencer == 0 %}previsto para hoje{% else %}em {{ c.dias_para_vencer }} dia(s){% endif %}
+            </span>
+            <strong class="alerta-valor">{{ c.valor|moeda(moeda) }}</strong>
+            <a href="{{ url_for('conta_receber_baixa', id_conta=c.id) }}" class="botao botao-primario botao-pequeno">Receber</a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<section class="grade grade-2">
+    <article class="cartao">
+        <h2 class="cartao-titulo">Despesas por categoria</h2>
+        {% if graficos.categorias.valores %}
+            <div class="grafico"><canvas id="grafico-categorias" aria-label="Despesas por categoria"></canvas></div>
+        {% else %}
+            <p class="texto-suave vazio-pequeno">Nenhuma despesa no período.</p>
+        {% endif %}
+    </article>
+    <article class="cartao">
+        <h2 class="cartao-titulo">Entradas × saídas (últimos 6 meses)</h2>
+        <div class="grafico"><canvas id="grafico-mensal" aria-label="Entradas e saídas por mês"></canvas></div>
+    </article>
+</section>
+
+<section class="grade grade-2">
+    <article class="cartao">
+        <div class="cartao-cabecalho">
+            <h2 class="cartao-titulo">Metas de gasto</h2>
+            <a href="{{ url_for('metas') }}" class="link">Configurar</a>
+        </div>
+        {% for o in orcamento %}
+            {% set pct = o.percentual or 0 %}
+            <div class="meta">
+                <div class="meta-topo">
+                    <span>{{ o.categoria.icone }} {{ o.categoria.nome }}</span>
+                    <span class="texto-suave">{{ o.realizado|moeda(moeda) }} de {{ o.planejado|moeda(moeda) }}</span>
+                </div>
+                <div class="barra"><div class="barra-preenchida {{ 'barra-estourada' if pct > 100 else ('barra-atencao' if pct > 80) }}" style="width: {{ [pct, 100]|min }}%"></div></div>
+            </div>
+        {% else %}
+            <p class="texto-suave vazio-pequeno">Nenhuma meta definida. <a class="link" href="{{ url_for('metas') }}">Defina limites por categoria</a>.</p>
+        {% endfor %}
+    </article>
+    <article class="cartao">
+        <div class="cartao-cabecalho">
+            <h2 class="cartao-titulo">Últimas despesas</h2>
+            <a href="{{ url_for('despesa_form') }}" class="botao botao-primario botao-pequeno">+ Despesa</a>
+        </div>
+        <ul class="lista-simples">
+            {% for d in ultimas %}
+            <li><span>{{ d.categoria.icone }} {{ d.descricao }} <small class="texto-suave">{{ d.data_pagamento|data }}</small></span><strong class="negativo">{{ d.valor|moeda(moeda) }}</strong></li>
+            {% else %}
+            <li class="texto-suave">Nenhuma despesa cadastrada ainda.</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    const dados = {{ graficos|tojson }};
+    const moeda = v => v.toLocaleString('pt-BR', {style: 'currency', currency: '{{ moeda }}'});
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.color = '#5b4a1a';
+
+    const elCat = document.getElementById('grafico-categorias');
+    if (elCat) {
+        new Chart(elCat, {
+            type: 'doughnut',
+            data: {labels: dados.categorias.rotulos, datasets: [{data: dados.categorias.valores, backgroundColor: dados.categorias.cores, borderWidth: 2, borderColor: '#fffdf6'}]},
+            options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'},
+                tooltip: {callbacks: {label: c => `${c.label}: ${moeda(c.parsed)}`}}}}
+        });
+    }
+    new Chart(document.getElementById('grafico-mensal'), {
+        type: 'bar',
+        data: {labels: dados.mensal.rotulos, datasets: [
+            {label: 'Entradas', data: dados.mensal.receitas, backgroundColor: '#2e8b57', borderRadius: 6},
+            {label: 'Saídas', data: dados.mensal.despesas, backgroundColor: '#c0392b', borderRadius: 6}]},
+        options: {maintainAspectRatio: false, scales: {y: {ticks: {callback: v => moeda(v)}}},
+            plugins: {tooltip: {callbacks: {label: c => `${c.dataset.label}: ${moeda(c.parsed.y)}`}}}}
+    });
+</script>
+{% endblock %}

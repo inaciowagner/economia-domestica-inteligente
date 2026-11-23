@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import botao_excluir, paginacao, etiqueta_categoria %}
+{% block title %}Despesas · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <h1 class="pagina-titulo">Despesas</h1>
+        <p class="pagina-subtitulo">Saídas financeiras já pagas</p>
+    </div>
+    <a href="{{ url_for('despesa_form') }}" class="botao botao-primario">+ Nova despesa</a>
+</section>
+
+{% with campos=['data_inicio','data_fim','categoria_id','forma_pagamento','valor_min','valor_max'], endpoint='despesas' %}{% include "_filtro.html" %}{% endwith %}
+
+<section class="cartao tabela-cartao">
+    <div class="tabela-resumo">{{ pagina.total }} lançamento(s) · Total filtrado: <strong class="negativo">{{ total|moeda(moeda) }}</strong></div>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th class="numero">Valor</th><th class="acoes">Ações</th></tr></thead>
+        <tbody>
+        {% for d in pagina.items %}
+            <tr>
+                <td data-rotulo="Data">{{ d.data_pagamento|data }}</td>
+                <td data-rotulo="Descrição">{{ d.descricao }}
+                    {% if d.conta_pagar_id %}<span class="selo" title="Gerada pela baixa de conta a pagar">vinculada</span>{% endif %}
+                    {% if d.observacoes %}<small class="tabela-obs">{{ d.observacoes }}</small>{% endif %}</td>
+                <td data-rotulo="Categoria">{{ etiqueta_categoria(d.categoria) }}</td>
+                <td data-rotulo="Pagamento">{{ d.forma_pagamento }}</td>
+                <td data-rotulo="Valor" class="numero negativo">{{ d.valor|moeda(moeda) }}</td>
+                <td class="acoes">
+                    <a href="{{ url_for('despesa_form', id_despesa=d.id) }}" class="botao-icone" title="Editar" aria-label="Editar">✎</a>
+                    {{ botao_excluir(url_for('despesa_excluir', id_despesa=d.id), 'Excluir esta despesa?' ~ (' A conta a pagar vinculada voltará a ficar pendente.' if d.conta_pagar_id else '')) }}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="tabela-vazia">Nenhuma despesa encontrada.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {{ paginacao(pagina, 'despesas') }}
+</section>
+{% endblock %}

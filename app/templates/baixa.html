@@ -1,0 +1,40 @@
+{# Baixa rápida: pagamento de conta a pagar ou recebimento de conta a receber #}
+{% extends "base.html" %}
+{% from "_macros.html" import formulario_completo, etiqueta_status, etiqueta_categoria %}
+{% block title %}{{ titulo }} · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <a href="{{ voltar }}" class="pagina-voltar">‹ Voltar</a>
+        <h1 class="pagina-titulo">{{ titulo }}</h1>
+    </div>
+</section>
+<div class="grade grade-2">
+    <article class="cartao resumo-conta">
+        <h2 class="cartao-titulo">{{ conta.descricao }}</h2>
+        <dl class="lista-dados">
+            <dt>Categoria</dt><dd>{{ etiqueta_categoria(conta.categoria) }}</dd>
+            <dt>Valor previsto</dt><dd class="valor-destaque">{{ conta.valor|moeda(moeda) }}</dd>
+            {% if conta.data_vencimento is defined %}
+                <dt>Vencimento</dt><dd>{{ conta.data_vencimento|data }}</dd>
+                {% if conta.total_parcelas %}<dt>Parcela</dt><dd>{{ conta.parcela_atual }}/{{ conta.total_parcelas }}</dd>{% endif %}
+                {% if conta.recorrente %}<dt>Recorrência</dt><dd>Mensal — a próxima conta será criada automaticamente</dd>{% endif %}
+            {% else %}
+                <dt>Data esperada</dt><dd>{{ conta.data_prevista|data }}</dd>
+                {% if conta.devedor %}<dt>Pagador</dt><dd>{{ conta.devedor }}</dd>{% endif %}
+                {% if conta.documento %}<dt>Documento</dt><dd>{{ conta.documento }}</dd>{% endif %}
+            {% endif %}
+            <dt>Status</dt><dd>{{ etiqueta_status(conta.status) }}</dd>
+        </dl>
+    </article>
+    <form method="POST" class="cartao formulario">
+        <p class="texto-suave">Ao confirmar, o lançamento será registrado automaticamente em
+            <strong>{{ 'Despesas' if conta.data_vencimento is defined else 'Receitas' }}</strong> na data informada.</p>
+        {{ formulario_completo(form) }}
+        <div class="formulario-acoes">
+            <a href="{{ voltar }}" class="botao botao-fantasma">Cancelar</a>
+            {{ form.botao(class="botao botao-sucesso") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

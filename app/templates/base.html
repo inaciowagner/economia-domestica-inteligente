@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}Economia Doméstica Inteligente{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/estilo.css') }}"/>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>"/>
+    {% block styles %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if current_user.is_authenticated %}
+    <header class="cabecalho">
+        <a href="{{ url_for('dashboard') }}" class="cabecalho-logo">
+            <span class="cabecalho-logo-icone">💰</span>
+            <span class="cabecalho-logo-texto">Economia Doméstica<small>Inteligente</small></span>
+        </a>
+
+        <input type="checkbox" id="menu-toggle" class="cabecalho-toggle" aria-label="Abrir menu"/>
+        <label for="menu-toggle" class="cabecalho-toggle-botao" aria-hidden="true">☰</label>
+
+        {% set ep = request.endpoint or '' %}
+        <nav class="cabecalho-menu">
+            <a href="{{ url_for('dashboard') }}" class="cabecalho-menu-item {{ 'ativo' if ep == 'dashboard' }}">Dashboard</a>
+            <a href="{{ url_for('receitas') }}" class="cabecalho-menu-item {{ 'ativo' if ep.startswith('receita') }}">Receitas</a>
+            <a href="{{ url_for('despesas') }}" class="cabecalho-menu-item {{ 'ativo' if ep.startswith('despesa') }}">Despesas</a>
+            <a href="{{ url_for('contas_pagar') }}" class="cabecalho-menu-item {{ 'ativo' if ep.startswith('conta_pagar') or ep == 'contas_pagar' }}">A pagar</a>
+            <a href="{{ url_for('contas_receber') }}" class="cabecalho-menu-item {{ 'ativo' if ep.startswith('conta_receber') or ep == 'contas_receber' }}">A receber</a>
+            <a href="{{ url_for('relatorios') }}" class="cabecalho-menu-item {{ 'ativo' if ep.startswith('relatorio') }}">Relatórios</a>
+            <a href="{{ url_for('configuracoes') }}" class="cabecalho-menu-item {{ 'ativo' if ep in ['configuracoes','categorias','categoria_form','metas','perfil','membros'] }}">Configurações</a>
+            <form action="{{ url_for('logout') }}" method="POST" class="cabecalho-sair">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <span class="cabecalho-usuario" title="{{ current_user.familia.nome }}">{{ current_user.nome.split()[0] }}</span>
+                <button type="submit" class="botao botao-fantasma botao-pequeno">Sair</button>
+            </form>
+        </nav>
+    </header>
+{% endif %}
+
+    <main class="conteudo">
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% if mensagens %}
+            <div class="mensagens">
+                {% for categoria, mensagem in mensagens %}
+                    <div class="mensagem mensagem-{{ categoria if categoria in ['sucesso','erro','alerta'] else 'alerta' }}" role="alert">{{ mensagem }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="rodape">
+        <p class="rodape-texto">Economia Doméstica Inteligente · {{ hoje.year }} · Gestão financeira familiar</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

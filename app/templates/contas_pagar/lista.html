@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import botao_excluir, paginacao, etiqueta_status, etiqueta_categoria %}
+{% block title %}Contas a pagar · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <h1 class="pagina-titulo">Contas a pagar</h1>
+        <p class="pagina-subtitulo">Boletos, faturas, parcelas, tributos e contas mensais</p>
+    </div>
+    <a href="{{ url_for('conta_pagar_form') }}" class="botao botao-primario">+ Nova conta</a>
+</section>
+
+{% with campos=['status','data_inicio','data_fim','categoria_id'], endpoint='contas_pagar' %}{% include "_filtro.html" %}{% endwith %}
+
+<section class="cartao tabela-cartao">
+    <div class="tabela-resumo">{{ pagina.total }} conta(s) · Total: <strong>{{ total|moeda(moeda) }}</strong>
+        <span class="legenda"><i class="legenda-cor linha-atraso"></i>vencida <i class="legenda-cor linha-proxima"></i>vence em até {{ dias_alerta }} dia(s)</span></div>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Status</th><th class="numero">Valor</th><th class="acoes">Ações</th></tr></thead>
+        <tbody>
+        {% for c in pagina.items %}
+            {% set classe = 'linha-atraso' if c.status == 'Atrasado' else ('linha-proxima' if c.aberta and c.dias_para_vencer <= dias_alerta else '') %}
+            <tr class="{{ classe }}">
+                <td data-rotulo="Vencimento">{{ c.data_vencimento|data }}
+                    {% if c.aberta %}<small class="tabela-obs">{% if c.dias_para_vencer < 0 %}há {{ -c.dias_para_vencer }} dia(s){% elif c.dias_para_vencer == 0 %}hoje{% else %}em {{ c.dias_para_vencer }} dia(s){% endif %}</small>{% endif %}</td>
+                <td data-rotulo="Descrição">{{ c.descricao }}
+                    {% if c.total_parcelas %}<span class="selo">{{ c.parcela_atual }}/{{ c.total_parcelas }}</span>{% endif %}
+                    {% if c.recorrente %}<span class="selo" title="Recorrente mensal">↻ mensal</span>{% endif %}
+                    {% if c.data_competencia %}<small class="tabela-obs">Competência: {{ c.data_competencia.strftime('%m/%Y') }}</small>{% endif %}
+                    {% if c.status == 'Pago' %}<small class="tabela-obs">Pago em {{ c.data_pagamento|data }}</small>{% endif %}</td>
+                <td data-rotulo="Categoria">{{ etiqueta_categoria(c.categoria) }}</td>
+                <td data-rotulo="Status">{{ etiqueta_status(c.status) }}</td>
+                <td data-rotulo="Valor" class="numero">{{ c.valor|moeda(moeda) }}</td>
+                <td class="acoes">
+                    {% if c.aberta %}
+                        <a href="{{ url_for('conta_pagar_baixa', id_conta=c.id) }}" class="botao botao-sucesso botao-pequeno">Pagar</a>
+                    {% endif %}
+                    {% if c.status != 'Pago' %}
+                        <a href="{{ url_for('conta_pagar_form', id_conta=c.id) }}" class="botao-icone" title="Editar" aria-label="Editar">✎</a>
+                    {% endif %}
+                    {{ botao_excluir(url_for('conta_pagar_excluir', id_conta=c.id), 'Excluir esta conta?' ~ (' A despesa já lançada será mantida.' if c.status == 'Pago' else '')) }}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="tabela-vazia">Nenhuma conta encontrada. 🎉</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {{ paginacao(pagina, 'contas_pagar') }}
+</section>
+{% endblock %}

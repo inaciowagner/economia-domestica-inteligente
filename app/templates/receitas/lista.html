@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import botao_excluir, paginacao, etiqueta_categoria %}
+{% block title %}Receitas · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <h1 class="pagina-titulo">Receitas</h1>
+        <p class="pagina-subtitulo">Entradas financeiras já recebidas pela família</p>
+    </div>
+    <a href="{{ url_for('receita_form') }}" class="botao botao-primario">+ Nova receita</a>
+</section>
+
+{% with campos=['data_inicio','data_fim','categoria_id','valor_min','valor_max'], endpoint='receitas' %}{% include "_filtro.html" %}{% endwith %}
+
+<section class="cartao tabela-cartao">
+    <div class="tabela-resumo">{{ pagina.total }} lançamento(s) · Total filtrado: <strong class="positivo">{{ total|moeda(moeda) }}</strong></div>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Conta / origem</th><th class="numero">Valor</th><th class="acoes">Ações</th></tr></thead>
+        <tbody>
+        {% for r in pagina.items %}
+            <tr>
+                <td data-rotulo="Data">{{ r.data_recebimento|data }}</td>
+                <td data-rotulo="Descrição">{{ r.descricao }}
+                    {% if r.conta_receber_id %}<span class="selo" title="Gerada a partir de conta a receber">vinculada</span>{% endif %}
+                    {% if r.observacoes %}<small class="tabela-obs">{{ r.observacoes }}</small>{% endif %}</td>
+                <td data-rotulo="Categoria">{{ etiqueta_categoria(r.categoria) }}</td>
+                <td data-rotulo="Origem">{{ r.conta_origem or '—' }}</td>
+                <td data-rotulo="Valor" class="numero positivo">{{ r.valor|moeda(moeda) }}</td>
+                <td class="acoes">
+                    <a href="{{ url_for('receita_form', id_receita=r.id) }}" class="botao-icone" title="Editar" aria-label="Editar">✎</a>
+                    {{ botao_excluir(url_for('receita_excluir', id_receita=r.id), 'Excluir esta receita?' ~ (' A conta a receber vinculada voltará a ficar em aberto.' if r.conta_receber_id else '')) }}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="tabela-vazia">Nenhuma receita encontrada.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {{ paginacao(pagina, 'receitas') }}
+</section>
+{% endblock %}

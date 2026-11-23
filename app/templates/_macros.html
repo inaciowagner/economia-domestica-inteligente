@@ -1,0 +1,59 @@
+{# Macros reutilizáveis: campos de formulário, botões de ação e paginação #}
+
+{% macro campo(field, classe="") %}
+    {% if field.type == "BooleanField" %}
+        <div class="formulario-campo formulario-campo-checkbox {{ classe }}">
+            {{ field(class="formulario-checkbox") }} {{ field.label(class="formulario-rotulo") }}
+            {% for erro in field.errors %}<p class="formulario-erro">{{ erro }}</p>{% endfor %}
+        </div>
+    {% else %}
+        <div class="formulario-campo {{ classe }} {{ 'formulario-campo-invalido' if field.errors }}">
+            {{ field.label(class="formulario-rotulo") }}
+            {{ field(class="formulario-entrada") }}
+            {% for erro in field.errors %}<p class="formulario-erro">{{ erro }}</p>{% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro formulario_completo(form) %}
+    {{ form.hidden_tag() }}
+    <div class="formulario-grade">
+    {% for field in form if field.type not in ["CSRFTokenField", "HiddenField", "SubmitField"] %}
+        {{ campo(field, "formulario-campo-largo" if field.type == "TextAreaField" or field.type == "BooleanField" else "") }}
+    {% endfor %}
+    </div>
+{% endmacro %}
+
+{% macro botao_excluir(url, pergunta="Confirma a exclusão?") %}
+    <form action="{{ url }}" method="POST" class="acao-inline" onsubmit="return confirm('{{ pergunta }}');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="botao-icone botao-icone-perigo" title="Excluir" aria-label="Excluir">🗑</button>
+    </form>
+{% endmacro %}
+
+{% macro paginacao(pagina, endpoint) %}
+    {% if pagina.pages > 1 %}
+    {% set args = request.args.to_dict() %}
+    <nav class="paginacao" aria-label="Paginação">
+        {% if pagina.has_prev %}
+            {% set _ = args.update({'pagina': pagina.prev_num}) %}
+            <a class="paginacao-item" href="{{ url_for(endpoint, **args) }}">‹ Anterior</a>
+        {% endif %}
+        <span class="paginacao-info">Página {{ pagina.page }} de {{ pagina.pages }}</span>
+        {% if pagina.has_next %}
+            {% set _ = args.update({'pagina': pagina.next_num}) %}
+            <a class="paginacao-item" href="{{ url_for(endpoint, **args) }}">Próxima ›</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+{% endmacro %}
+
+{% macro etiqueta_status(status) %}
+    {% set mapa = {'Pendente': 'pendente', 'Previsto': 'pendente', 'Pago': 'ok', 'Recebido': 'ok',
+                   'Atrasado': 'atraso', 'Em Atraso': 'atraso', 'Cancelado': 'cancelado'} %}
+    <span class="etiqueta etiqueta-{{ mapa.get(status, 'pendente') }}">{{ status }}</span>
+{% endmacro %}
+
+{% macro etiqueta_categoria(cat) %}
+    <span class="etiqueta-categoria" style="--cor-cat: {{ cat.cor }}">{{ cat.icone }} {{ cat.nome }}</span>
+{% endmacro %}

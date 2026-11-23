@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Categorias · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho"><div><h1 class="pagina-titulo">Configurações</h1>
+    <p class="pagina-subtitulo">Categorias personalizadas de receitas e despesas</p></div>
+    <div class="botoes">
+        <a href="{{ url_for('categoria_form', tipo='receita') }}" class="botao botao-fantasma">+ Categoria de receita</a>
+        <a href="{{ url_for('categoria_form', tipo='despesa') }}" class="botao botao-primario">+ Categoria de despesa</a>
+    </div></section>
+{% include "configuracoes/_abas.html" %}
+<div class="grade grade-2">
+{% for tipo, titulo in [('receita','Receitas'),('despesa','Despesas')] %}
+    <section class="cartao">
+        <h2 class="cartao-titulo">{{ titulo }}</h2>
+        <ul class="lista-categorias">
+        {% for c in categorias if c.tipo == tipo %}
+            <li class="categoria-item {{ 'categoria-inativa' if not c.ativa }}">
+                <span class="categoria-icone" style="background: {{ c.cor }}">{{ c.icone }}</span>
+                <span class="categoria-nome">{{ c.nome }}
+                    {% if c.meta_mensal %}<small class="texto-suave">meta {{ c.meta_mensal|moeda(moeda) }}/mês</small>{% endif %}
+                    {% if not c.ativa %}<small class="texto-suave">inativa</small>{% endif %}</span>
+                <a href="{{ url_for('categoria_form', id_categoria=c.id) }}" class="botao-icone" title="Editar" aria-label="Editar">✎</a>
+                <form action="{{ url_for('categoria_alternar', id_categoria=c.id) }}" method="POST" class="acao-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button class="botao botao-fantasma botao-pequeno">{{ 'Inativar' if c.ativa else 'Ativar' }}</button>
+                </form>
+            </li>
+        {% else %}
+            <li class="texto-suave">Nenhuma categoria.</li>
+        {% endfor %}
+        </ul>
+    </section>
+{% endfor %}
+</div>
+<p class="texto-suave">Categorias inativas deixam de aparecer nos formulários, mas os lançamentos antigos são preservados.</p>
+{% endblock %}

@@ -1,0 +1,14 @@
+{# Barra de filtros (GET). Variáveis: filtro, campos (lista de nomes de campos a exibir), endpoint #}
+<form method="GET" class="cartao filtros">
+    {% for nome in campos %}
+        {% set f = filtro[nome] %}
+        <div class="formulario-campo">
+            {{ f.label(class="formulario-rotulo") }}
+            {{ f(class="formulario-entrada") }}
+        </div>
+    {% endfor %}
+    <div class="filtros-acoes">
+        <button type="submit" class="botao botao-primario">Filtrar</button>
+        <a href="{{ url_for(endpoint) }}" class="botao botao-fantasma">Limpar</a>
+    </div>
+</form>

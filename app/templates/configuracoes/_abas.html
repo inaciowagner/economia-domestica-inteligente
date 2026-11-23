@@ -1,0 +1,5 @@
+<nav class="abas">
+    {% for chave, rotulo, rota in [('geral','Preferências','configuracoes'),('categorias','Categorias','categorias'),('metas','Metas de gasto','metas'),('perfil','Meu perfil','perfil'),('membros','Membros da família','membros')] %}
+        <a href="{{ url_for(rota) }}" class="abas-item {{ 'ativo' if aba == chave }}">{{ rotulo }}</a>
+    {% endfor %}
+</nav>

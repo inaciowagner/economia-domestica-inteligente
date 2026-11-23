@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import formulario_completo %}
+{% block title %}Configurações · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho"><div><h1 class="pagina-titulo">Configurações</h1>
+    <p class="pagina-subtitulo">Preferências gerais da família</p></div></section>
+{% include "configuracoes/_abas.html" %}
+<form method="POST" class="cartao formulario">
+    {{ formulario_completo(form) }}
+    <p class="texto-suave">O <strong>dia de fechamento</strong> define o "mês" do dashboard. Ex.: dia 10 → o mês vai de 10 a 9 do mês seguinte.
+       {% if not current_user.eh_admin %}<br/>Somente o administrador pode alterar as preferências.{% endif %}</p>
+    <div class="formulario-acoes">{{ form.botao(class="botao botao-primario", disabled=not current_user.eh_admin) }}</div>
+</form>
+{% endblock %}

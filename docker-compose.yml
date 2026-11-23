@@ -1,0 +1,17 @@
+# PostgreSQL local para desenvolvimento:  docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: economia_domestica_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: economia
+      POSTGRES_PASSWORD: economia
+      POSTGRES_DB: economia_domestica
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+
+volumes:
+  dados_postgres:

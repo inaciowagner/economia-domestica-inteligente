@@ -1,0 +1,20 @@
+{# Formulário genérico de cadastro/edição (receitas, despesas, contas, categorias) #}
+{% extends "base.html" %}
+{% from "_macros.html" import formulario_completo %}
+{% block title %}{{ titulo }} · Economia Doméstica{% endblock %}
+{% block content %}
+{% if config %}{% include "configuracoes/_abas.html" %}{% endif %}
+<section class="pagina-cabecalho">
+    <div>
+        <a href="{{ voltar }}" class="pagina-voltar">‹ Voltar</a>
+        <h1 class="pagina-titulo">{{ titulo }}</h1>
+    </div>
+</section>
+<form method="POST" class="cartao formulario">
+    {{ formulario_completo(form) }}
+    <div class="formulario-acoes">
+        <a href="{{ voltar }}" class="botao botao-fantasma">Cancelar</a>
+        {{ form.botao(class="botao botao-primario") }}
+    </div>
+</form>
+{% endblock %}

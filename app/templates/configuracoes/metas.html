@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Metas de gasto · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho"><div><h1 class="pagina-titulo">Configurações</h1>
+    <p class="pagina-subtitulo">Metas mensais de gasto por categoria · gasto no mês atual ({{ inicio|data }} a {{ fim|data }})</p></div></section>
+{% include "configuracoes/_abas.html" %}
+<form method="POST" class="cartao">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Categoria</th><th class="numero">Gasto no mês</th><th>Meta mensal</th><th>Situação</th></tr></thead>
+        <tbody>
+        {% for c in categorias %}
+            {% set gasto = gastos.get(c.id, 0) %}
+            <tr>
+                <td data-rotulo="Categoria">{{ c.icone }} {{ c.nome }}</td>
+                <td data-rotulo="Gasto" class="numero">{{ gasto|moeda(moeda) }}</td>
+                <td data-rotulo="Meta"><input type="number" name="meta_{{ c.id }}" min="0" step="0.01" inputmode="decimal"
+                           value="{{ c.meta_mensal if c.meta_mensal is not none }}" placeholder="sem meta" class="formulario-entrada entrada-meta"/></td>
+                <td data-rotulo="Situação">{% if c.meta_mensal %}{% set pct = (gasto / c.meta_mensal * 100)|float %}
+                    <div class="barra barra-tabela"><div class="barra-preenchida {{ 'barra-estourada' if pct > 100 else ('barra-atencao' if pct > 80) }}" style="width: {{ [pct, 100]|min }}%"></div></div>
+                    <small>{{ '%.0f'|format(pct) }}%</small>{% else %}—{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    <div class="formulario-acoes"><button class="botao botao-primario">Salvar metas</button></div>
+</form>
+{% endblock %}

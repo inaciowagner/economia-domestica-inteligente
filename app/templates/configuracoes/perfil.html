@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block title %}Meu perfil · Economia Doméstica{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho"><div><h1 class="pagina-titulo">Configurações</h1>
+    <p class="pagina-subtitulo">Seus dados de acesso</p></div></section>
+{% include "configuracoes/_abas.html" %}
+<div class="grade grade-2">
+    <form method="POST" class="cartao formulario">
+        <h2 class="cartao-titulo">Perfil</h2>
+        {{ form.hidden_tag() }}
+        {{ campo(form.nome) }}{{ campo(form.email) }}
+        <p class="texto-suave">Papel: <strong>{{ 'Administrador' if current_user.eh_admin else 'Membro' }}</strong> · Família: {{ current_user.familia.nome }}</p>
+        <div class="formulario-acoes">{{ form.botao(class="botao botao-primario") }}</div>
+    </form>
+    <form method="POST" class="cartao formulario">
+        <h2 class="cartao-titulo">Alterar senha</h2>
+        {{ form_senha.hidden_tag() }}
+        {{ campo(form_senha.senha_atual) }}{{ campo(form_senha.nova_senha) }}{{ campo(form_senha.confirm_senha) }}
+        <div class="formulario-acoes">{{ form_senha.botao_senha(class="botao botao-primario") }}</div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% from "_macros.html" import etiqueta_status %}
+{% block title %}Relatórios · Economia Doméstica{% endblock %}
+{% block body_class %}pagina-relatorio{% endblock %}
+{% block content %}
+<section class="pagina-cabecalho">
+    <div>
+        <h1 class="pagina-titulo">Relatórios</h1>
+        <p class="pagina-subtitulo">Período: {{ d.inicio|data }} a {{ d.fim|data }} · {{ current_user.familia.nome }}</p>
+    </div>
+    <div class="botoes nao-imprimir">
+        <button type="button" class="botao botao-fantasma" onclick="window.print()">🖨 Imprimir (A4)</button>
+        <a href="{{ url_for('relatorio_csv') }}?{{ query }}" class="botao botao-fantasma">⬇ CSV</a>
+        <a href="{{ url_for('relatorio_pdf') }}?{{ query }}" class="botao botao-primario">⬇ PDF</a>
+    </div>
+</section>
+
+<form method="GET" class="cartao filtros nao-imprimir">
+    {% for nome in ['data_inicio','data_fim','tipo','categoria_id','status','ano'] %}
+        <div class="formulario-campo">{{ form[nome].label(class="formulario-rotulo") }}{{ form[nome](class="formulario-entrada", placeholder=d.ano if nome == 'ano') }}</div>
+    {% endfor %}
+    <div class="filtros-acoes">
+        <button type="submit" class="botao botao-primario">Gerar relatório</button>
+        <a href="{{ url_for('relatorios') }}" class="botao botao-fantasma">Limpar</a>
+    </div>
+</form>
+
+<section class="indicadores">
+    <article class="indicador indicador-receita"><span class="indicador-rotulo">Receitas</span><strong class="indicador-valor">{{ d.resumo.receitas|moeda(moeda) }}</strong></article>
+    <article class="indicador indicador-despesa"><span class="indicador-rotulo">Despesas</span><strong class="indicador-valor">{{ d.resumo.despesas|moeda(moeda) }}</strong></article>
+    <article class="indicador indicador-saldo"><span class="indicador-rotulo">Saldo do período</span><strong class="indicador-valor {{ 'negativo' if d.resumo.saldo < 0 }}">{{ d.resumo.saldo|moeda(moeda) }}</strong></article>
+</section>
+
+<section class="cartao bloco-relatorio">
+    <h2 class="cartao-titulo">Orçamento planejado × realizado <small class="texto-suave">({{ d.n_meses }} mês(es) de meta)</small></h2>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Categoria</th><th class="numero">Planejado</th><th class="numero">Realizado</th><th class="numero">Diferença</th><th>Execução</th></tr></thead>
+        <tbody>
+        {% for o in d.orcamento %}
+            <tr>
+                <td data-rotulo="Categoria">{{ o.categoria.icone }} {{ o.categoria.nome }}</td>
+                <td data-rotulo="Planejado" class="numero">{{ o.planejado|moeda(moeda) if o.planejado else 'sem meta' }}</td>
+                <td data-rotulo="Realizado" class="numero">{{ o.realizado|moeda(moeda) }}</td>
+                <td data-rotulo="Diferença" class="numero {{ ('negativo' if o.diferenca < 0 else 'positivo') if o.planejado }}">{{ o.diferenca|moeda(moeda) if o.planejado else '—' }}</td>
+                <td data-rotulo="Execução">{% if o.percentual is not none %}
+                    <div class="barra barra-tabela"><div class="barra-preenchida {{ 'barra-estourada' if o.percentual > 100 else ('barra-atencao' if o.percentual > 80) }}" style="width: {{ [o.percentual, 100]|min }}%"></div></div>
+                    <small>{{ '%.0f'|format(o.percentual) }}%</small>{% else %}—{% endif %}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="tabela-vazia">Sem metas nem despesas no período.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="cartao bloco-relatorio">
+    <h2 class="cartao-titulo">Fluxo de caixa mensal</h2>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Mês</th><th class="numero">Entradas</th><th class="numero">Saídas</th><th class="numero">Resultado</th><th class="numero">Saldo acumulado</th></tr></thead>
+        <tbody>
+        {% for s in d.fluxo %}
+            <tr><td data-rotulo="Mês">{{ s.rotulo }}</td><td data-rotulo="Entradas" class="numero positivo">{{ s.receitas|moeda(moeda) }}</td>
+                <td data-rotulo="Saídas" class="numero negativo">{{ s.despesas|moeda(moeda) }}</td>
+                <td data-rotulo="Resultado" class="numero {{ 'negativo' if s.saldo < 0 else 'positivo' }}">{{ s.saldo|moeda(moeda) }}</td>
+                <td data-rotulo="Acumulado" class="numero"><strong>{{ s.acumulado|moeda(moeda) }}</strong></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="cartao bloco-relatorio">
+    <h2 class="cartao-titulo">Balanço anual {{ d.ano }}</h2>
+    <div class="grafico grafico-baixo nao-imprimir"><canvas id="grafico-anual"></canvas></div>
+    <div class="tabela-rolagem">
+    <table class="tabela tabela-compacta">
+        <thead><tr><th>Mês</th>{% for s in d.anual %}<th class="numero">{{ s.rotulo.split('/')[0] }}</th>{% endfor %}<th class="numero">Total</th></tr></thead>
+        <tbody>
+            <tr><td>Receitas</td>{% for s in d.anual %}<td class="numero">{{ '%.0f'|format(s.receitas) }}</td>{% endfor %}<td class="numero positivo"><strong>{{ total_anual.receitas|moeda(moeda) }}</strong></td></tr>
+            <tr><td>Despesas</td>{% for s in d.anual %}<td class="numero">{{ '%.0f'|format(s.despesas) }}</td>{% endfor %}<td class="numero negativo"><strong>{{ total_anual.despesas|moeda(moeda) }}</strong></td></tr>
+            <tr><td>Saldo</td>{% for s in d.anual %}<td class="numero {{ 'negativo' if s.saldo < 0 }}">{{ '%.0f'|format(s.saldo) }}</td>{% endfor %}<td class="numero"><strong>{{ total_anual.saldo|moeda(moeda) }}</strong></td></tr>
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="cartao bloco-relatorio">
+    <h2 class="cartao-titulo">Contas a pagar e a receber no período</h2>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Status</th><th class="numero">Valor</th></tr></thead>
+        <tbody>
+        {% for tipo, c, dt in d.contas %}
+            <tr><td data-rotulo="Data">{{ dt|data }}</td><td data-rotulo="Tipo">{{ tipo }}</td><td data-rotulo="Descrição">{{ c.descricao }}</td>
+                <td data-rotulo="Categoria">{{ c.categoria.nome }}</td><td data-rotulo="Status">{{ etiqueta_status(c.status) }}</td>
+                <td data-rotulo="Valor" class="numero">{{ c.valor|moeda(moeda) }}</td></tr>
+        {% else %}
+            <tr><td colspan="6" class="tabela-vazia">Nenhuma conta no período/filtro.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="cartao bloco-relatorio">
+    <h2 class="cartao-titulo">Movimentações ({{ d.movimentos|length }})</h2>
+    <div class="tabela-rolagem">
+    <table class="tabela">
+        <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Forma / origem</th><th class="numero">Valor</th></tr></thead>
+        <tbody>
+        {% for m in d.movimentos %}
+            <tr><td data-rotulo="Data">{{ m.data|data }}</td><td data-rotulo="Tipo">{{ m.tipo }}</td>
+                <td data-rotulo="Categoria"><span class="etiqueta-categoria" style="--cor-cat: {{ m.cor }}">{{ m.categoria }}</span></td>
+                <td data-rotulo="Descrição">{{ m.descricao }}</td><td data-rotulo="Forma/origem">{{ m.detalhe or '—' }}</td>
+                <td data-rotulo="Valor" class="numero {{ 'positivo' if m.tipo == 'Receita' else 'negativo' }}">{{ m.valor|moeda(moeda) }}</td></tr>
+        {% else %}
+            <tr><td colspan="6" class="tabela-vazia">Nenhuma movimentação no período.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    const anual = {{ d.anual|map(attribute='rotulo')|list|tojson }};
+    new Chart(document.getElementById('grafico-anual'), {
+        type: 'line',
+        data: {labels: anual, datasets: [
+            {label: 'Receitas', data: {{ d.anual|map(attribute='receitas')|map('float')|list|tojson }}, borderColor: '#2e8b57', backgroundColor: '#2e8b5733', fill: true, tension: .3},
+            {label: 'Despesas', data: {{ d.anual|map(attribute='despesas')|map('float')|list|tojson }}, borderColor: '#c0392b', backgroundColor: '#c0392b22', fill: true, tension: .3}]},
+        options: {maintainAspectRatio: false, plugins: {legend: {position: 'bottom'}}}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block title %}Entrar · Economia Doméstica Inteligente{% endblock %}
+{% block body_class %}pagina-acesso{% endblock %}
+{% block content %}
+<section class="acesso">
+    <div class="acesso-apresentacao">
+        <span class="acesso-icone">💰</span>
+        <h1 class="acesso-titulo">Economia Doméstica Inteligente</h1>
+        <p class="acesso-texto">Receitas, despesas, contas a pagar e a receber da sua família em um só lugar — com alertas de vencimento, metas por categoria e relatórios prontos para imprimir.</p>
+    </div>
+    <form method="POST" class="cartao acesso-formulario">
+        {{ form.hidden_tag() }}
+        <h2 class="cartao-titulo">Entrar</h2>
+        {{ campo(form.email) }}
+        {{ campo(form.senha) }}
+        {{ campo(form.lembrar) }}
+        {{ form.botao(class="botao botao-primario botao-bloco") }}
+        <a href="{{ url_for('criar_conta') }}" class="acesso-link">Ainda não tem conta? Cadastre sua família</a>
+    </form>
+</section>
+{% endblock %}
