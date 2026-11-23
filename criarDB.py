@@ -9,10 +9,10 @@ Uso (com o ambiente virtual ativo e o .env configurado):
 
 import random
 import sys
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-from app import app, bcrypt, database
+from app import app, bcrypt, data_hoje, database
 from app.models import Categoria, ContaPagar, ContaReceber, Despesa, Familia, Receita, Usuario
 from app.routes import criar_categorias_padrao
 from app.utils import atualizar_status_vencidos, somar_meses
@@ -41,7 +41,7 @@ def popular_demo():
     for nome, meta in metas.items():
         cat[nome].meta_mensal = Decimal(meta)
 
-    hoje = date.today()
+    hoje = data_hoje()
     # 7 meses de histórico (6 anteriores + atual)
     for i in range(6, -1, -1):
         mes = somar_meses(hoje.replace(day=1), -i)

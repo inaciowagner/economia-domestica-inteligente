@@ -7,7 +7,6 @@ Formulários e validações (Flask-WTF / WTForms).
 - As opções de categoria são carregadas na rota (dependem da família logada).
 """
 
-from datetime import date
 from decimal import Decimal
 
 from flask_wtf import FlaskForm
@@ -16,6 +15,7 @@ from wtforms import (BooleanField, DateField, DecimalField, EmailField, IntegerF
 from wtforms.validators import (DataRequired, Email, EqualTo, Length, NumberRange, Optional, Regexp,
                                 ValidationError)
 
+from app import data_hoje
 from app.models import Usuario
 
 
@@ -65,7 +65,7 @@ class FormCriarConta(FormBase):
 class FormReceita(FormBase):
     descricao = StringField("Descrição", validators=[DataRequired(), Length(max=160)])
     valor = campo_valor()
-    data_recebimento = DateField("Data de recebimento", default=date.today, validators=[DataRequired()])
+    data_recebimento = DateField("Data de recebimento", default=data_hoje, validators=[DataRequired()])
     categoria_id = SelectField("Categoria", coerce=int, validators=[DataRequired("Escolha a categoria.")])
     conta_origem = StringField("Conta / origem", validators=[Optional(), Length(max=80)],
                                render_kw={"placeholder": "Ex.: Conta corrente Banco X"})
@@ -76,7 +76,7 @@ class FormReceita(FormBase):
 class FormDespesa(FormBase):
     descricao = StringField("Descrição", validators=[DataRequired(), Length(max=160)])
     valor = campo_valor()
-    data_pagamento = DateField("Data do pagamento", default=date.today, validators=[DataRequired()])
+    data_pagamento = DateField("Data do pagamento", default=data_hoje, validators=[DataRequired()])
     categoria_id = SelectField("Categoria", coerce=int, validators=[DataRequired("Escolha a categoria.")])
     forma_pagamento = SelectField("Forma de pagamento", choices=FORMAS_PAGAMENTO)
     observacoes = TextAreaField("Observações", validators=[Optional(), Length(max=2000)])
@@ -114,7 +114,7 @@ class FormContaReceber(FormBase):
 
 class FormBaixaPagamento(FormBase):
     """Dar baixa numa conta a pagar -> gera a Despesa."""
-    data_pagamento = DateField("Data efetiva do pagamento", default=date.today, validators=[DataRequired()])
+    data_pagamento = DateField("Data efetiva do pagamento", default=data_hoje, validators=[DataRequired()])
     valor = campo_valor("Valor pago")
     forma_pagamento = SelectField("Forma de pagamento", choices=FORMAS_PAGAMENTO)
     botao = SubmitField("Confirmar pagamento")
@@ -122,7 +122,7 @@ class FormBaixaPagamento(FormBase):
 
 class FormBaixaRecebimento(FormBase):
     """Confirmar recebimento de uma conta a receber -> gera a Receita."""
-    data_recebimento = DateField("Data do recebimento", default=date.today, validators=[DataRequired()])
+    data_recebimento = DateField("Data do recebimento", default=data_hoje, validators=[DataRequired()])
     valor = campo_valor("Valor recebido")
     conta_origem = StringField("Conta de destino", validators=[Optional(), Length(max=80)])
     botao = SubmitField("Confirmar recebimento")

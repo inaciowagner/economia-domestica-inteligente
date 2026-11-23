@@ -8,11 +8,11 @@ Regras gerais:
 - Índices compostos (familia_id, data) aceleram as consultas por período.
 """
 
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
 from flask_login import UserMixin
 
-from app import database, login_manager
+from app import data_hoje, database, login_manager
 
 DINHEIRO = database.Numeric(12, 2)
 
@@ -91,7 +91,7 @@ class Receita(database.Model):
                                        database.ForeignKey("conta_receber.id", ondelete="SET NULL"), unique=True)
     descricao = database.Column(database.String(160), nullable=False)
     valor = database.Column(DINHEIRO, nullable=False)
-    data_recebimento = database.Column(database.Date, nullable=False, default=date.today)
+    data_recebimento = database.Column(database.Date, nullable=False, default=data_hoje)
     conta_origem = database.Column(database.String(80))
     observacoes = database.Column(database.Text)
     criado_em = database.Column(database.DateTime(timezone=True), nullable=False, default=agora)
@@ -112,7 +112,7 @@ class Despesa(database.Model):
                                      database.ForeignKey("conta_pagar.id", ondelete="SET NULL"), unique=True)
     descricao = database.Column(database.String(160), nullable=False)
     valor = database.Column(DINHEIRO, nullable=False)
-    data_pagamento = database.Column(database.Date, nullable=False, default=date.today)
+    data_pagamento = database.Column(database.Date, nullable=False, default=data_hoje)
     forma_pagamento = database.Column(database.String(30), nullable=False, default="Pix")
     observacoes = database.Column(database.Text)
     criado_em = database.Column(database.DateTime(timezone=True), nullable=False, default=agora)
@@ -149,7 +149,7 @@ class ContaPagar(database.Model):
 
     @property
     def dias_para_vencer(self):
-        return (self.data_vencimento - date.today()).days
+        return (self.data_vencimento - data_hoje()).days
 
     @property
     def aberta(self):
@@ -181,7 +181,7 @@ class ContaReceber(database.Model):
 
     @property
     def dias_para_vencer(self):
-        return (self.data_prevista - date.today()).days
+        return (self.data_prevista - data_hoje()).days
 
     @property
     def aberta(self):

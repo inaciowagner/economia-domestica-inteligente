@@ -12,7 +12,7 @@ from flask import abort
 from flask_login import current_user
 from sqlalchemy import extract, func
 
-from app import database, formatar_moeda
+from app import data_hoje, database, formatar_moeda
 from app.models import Categoria, ContaPagar, ContaReceber, Despesa, Receita
 
 MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -62,7 +62,7 @@ def periodo_ciclo(referencia, dia_fechamento, deslocamento=0):
 # ------------------------------------------------------------------ status automáticos
 def atualizar_status_vencidos(familia_id):
     """Marca como Atrasado / Em Atraso o que passou da data e continua aberto."""
-    hoje = date.today()
+    hoje = data_hoje()
     ContaPagar.query.filter(ContaPagar.familia_id == familia_id, ContaPagar.status == "Pendente",
                             ContaPagar.data_vencimento < hoje).update({"status": "Atrasado"})
     ContaReceber.query.filter(ContaReceber.familia_id == familia_id, ContaReceber.status == "Previsto",
@@ -110,7 +110,7 @@ def serie_mensal(familia_id, ano=None, meses=6):
     if ano:
         lista = [date(ano, m, 1) for m in range(1, 13)]
     else:
-        atual = date.today().replace(day=1)
+        atual = data_hoje().replace(day=1)
         lista = [somar_meses(atual, -i) for i in range(meses - 1, -1, -1)]
     inicio, fim = lista[0], somar_meses(lista[-1], 1) - timedelta(days=1)
 

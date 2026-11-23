@@ -18,7 +18,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
-from app import app, bcrypt, database
+from app import app, bcrypt, data_hoje, database
 from app.forms import (FormBaixaPagamento, FormBaixaRecebimento, FormCategoria, FormContaPagar,
                        FormContaReceber, FormCriarConta, FormDespesa, FormFiltro, FormLogin, FormMembro,
                        FormPerfil, FormPreferencias, FormReceita, FormRelatorio, FormSenha)
@@ -117,7 +117,7 @@ def logout():
 def dashboard():
     familia = familia_atual()
     atualizar_status_vencidos(familia.id)
-    hoje = date.today()
+    hoje = data_hoje()
 
     # ----- período selecionado: atual, anterior ou personalizado
     periodo = request.args.get("periodo", "atual")
@@ -507,7 +507,7 @@ def conta_receber_excluir(id_conta):
 
 # =========================================================== 7. RELATÓRIOS
 def _dados_relatorio(form, familia):
-    hoje = date.today()
+    hoje = data_hoje()
     inicio = form.data_inicio.data or date(hoje.year, 1, 1)
     fim = form.data_fim.data or hoje
     if fim < inicio:
@@ -705,7 +705,7 @@ def metas():
         flash("Metas salvas." if not erros else f"Metas salvas; {erros} valor(es) inválido(s) ignorado(s).",
               "sucesso" if not erros else "alerta")
         return redirect(url_for("metas"))
-    inicio, fim = periodo_ciclo(date.today(), familia.dia_fechamento)
+    inicio, fim = periodo_ciclo(data_hoje(), familia.dia_fechamento)
     gastos = {c.id: v for c, v in despesas_por_categoria(familia.id, inicio, fim)}
     return render_template("configuracoes/metas.html", categorias=cats, gastos=gastos, aba="metas",
                            moeda=familia.moeda, inicio=inicio, fim=fim)

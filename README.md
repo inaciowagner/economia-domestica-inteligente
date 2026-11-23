@@ -125,6 +125,23 @@ familia 1─N conta_receber (data_prevista, status, devedor, documento)
 Para evoluir o esquema depois de colocar dados reais, recomenda-se adicionar o **Flask-Migrate** (Alembic):
 `pip install Flask-Migrate`, `Migrate(app, database)` no `__init__.py`, depois `flask db init`, `flask db migrate` e `flask db upgrade`.
 
+## Deploy na Vercel
+
+O projeto já está preparado para rodar em ambiente serverless: quando a variável `VERCEL` existe, o app
+usa conexões sem pool (`NullPool`), cookies apenas via HTTPS e exige `SECRET_KEY` definida.
+Datas são calculadas no fuso de `TIMEZONE` (padrão `America/Sao_Paulo`), já que os servidores rodam em UTC.
+
+1. Crie um banco PostgreSQL gerenciado (ex.: [Neon](https://neon.tech) ou [Supabase](https://supabase.com)).
+   No Neon, prefira a URL *pooled* (host com `-pooler`). URLs `postgres://` e `postgresql://` são aceitas.
+2. Crie as tabelas a partir da sua máquina, apontando para o banco remoto:
+   ```bash
+   DATABASE_URL="<url do banco>" python criarDB.py --demo   # ou sem --demo para começar vazio
+   ```
+3. Importe o repositório na Vercel e defina as variáveis de ambiente:
+   `SECRET_KEY` (gere com `python -c "import secrets; print(secrets.token_hex(32))"`), `DATABASE_URL` e,
+   opcionalmente, `TIMEZONE`.
+4. Faça o deploy. A Vercel detecta o Flask pela variável `app` exposta em `main.py`.
+
 ## Licença
 
 Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
