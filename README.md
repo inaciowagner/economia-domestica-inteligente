@@ -124,3 +124,7 @@ familia 1─N conta_receber (data_prevista, status, devedor, documento)
 
 Para evoluir o esquema depois de colocar dados reais, recomenda-se adicionar o **Flask-Migrate** (Alembic):
 `pip install Flask-Migrate`, `Migrate(app, database)` no `__init__.py`, depois `flask db init`, `flask db migrate` e `flask db upgrade`.
+
+## Licença
+
+Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
