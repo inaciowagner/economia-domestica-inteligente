@@ -5,6 +5,7 @@ __pycache__/
 instance/
 *.swp
 *.swo
+*~
 .DS_Store
 .vscode/
 .idea/

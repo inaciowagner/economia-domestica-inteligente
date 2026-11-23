@@ -221,8 +221,20 @@ input[type="color"].formulario-entrada { height: 44px; padding: 4px; }
 /* ----------------------------------------------------------- acesso (login / criar conta) */
 .pagina-acesso { background: linear-gradient(68.15deg, var(--ouro-100) 16.62%, var(--ouro-700) 85.61%); }
 .acesso { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; min-height: 70vh; }
-.acesso-icone { font-size: 64px; }
-.acesso-titulo { font-family: var(--fonte-titulo); font-size: 42px; color: #4a3800; line-height: 1.1; margin: 8px 0 16px; }
+.acesso-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    font-size: 52px;
+    line-height: 1;
+    background: var(--texto);
+    border: 3px solid var(--ouro-100);
+    box-shadow: 0 8px 22px rgba(47, 38, 16, .28);
+}
+.acesso-titulo { font-family: var(--fonte-titulo); font-size: 42px; color: #4a3800; line-height: 1.1; margin: 14px 0 16px; }
 .acesso-texto { font-size: 18px; color: #4a3800; max-width: 46ch; }
 .acesso-formulario { display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; justify-self: center; }
 .acesso-link { text-align: center; font-size: 14px; color: var(--ouro-900); }
@@ -366,6 +378,7 @@ input[type="color"].formulario-entrada { height: 44px; padding: 4px; }
     .conteudo { padding: 20px 16px 40px; }
     .grade-2, .formulario-grade, .acesso { grid-template-columns: 1fr; }
     .acesso { gap: 24px; min-height: auto; }
+    .acesso-icone { width: 80px; height: 80px; font-size: 42px; }
     .acesso-titulo { font-size: 30px; }
     .pagina-titulo { font-size: 24px; }
     .alerta-item { grid-template-columns: 1fr auto; }
