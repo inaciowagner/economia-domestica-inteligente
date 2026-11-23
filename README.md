@@ -2,6 +2,9 @@
 
 Sistema web de gestão financeira familiar em **Python + Flask + Jinja2 + PostgreSQL**.
 
+🔗 **Demo online:** https://economia-domestica-inteligente.vercel.app  
+Login: `demo@familia.com` · Senha: `demo12345`
+
 | Módulo | O que faz |
 |---|---|
 | **Dashboard** | Receitas realizadas, despesas pagas, saldo atual, saldo previsto, alertas de vencimento, gráfico de despesas por categoria, entradas × saídas (6 meses) e progresso das metas. Período: mês atual, mês anterior ou personalizado (respeita o *dia de fechamento*). |

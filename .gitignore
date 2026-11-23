@@ -8,3 +8,5 @@ instance/
 .DS_Store
 .vscode/
 .idea/
+.vercel
+.env.local
